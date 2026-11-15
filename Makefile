@@ -31,7 +31,7 @@ DEBS    := $(foreach p,dkms firmware,$(DEBDIR)/gpu-unlock-$(p)_$(VERSION)_all.de
 .PHONY: all dist inputs firmware assets install-dkms install-firmware \
         install-mkinitcpio install-initramfs-tools install-dracut \
         install-licenses arch deb rpm install install-arch install-deb install-rpm \
-        test-module test-packages
+        install-unraid-image test-module test-packages
 
 all:
 
@@ -109,7 +109,10 @@ install:
 		$(MAKE) install-$$target; \
 		exit $$?; \
 	done; \
-	echo "Unsupported distribution: $${ID:-unknown}. Use make install-arch, install-deb, or install-rpm explicitly (RPM requires DNF)." >&2; \
+	case "$${ID:-} $${ID_LIKE:-}" in *[Uu]nraid*|*[Ss]lackware*) \
+		echo "On Unraid use make install-unraid-image: Unraid has no initramfs, so the module must go inside bzroot." >&2 ;; \
+	esac; \
+	echo "Unsupported distribution: $${ID:-unknown}. Use make install-arch, install-deb, install-rpm or install-unraid-image (the RPM target requires DNF)." >&2; \
 	exit 1
 
 arch:
@@ -142,6 +145,12 @@ install-rpm:
 	sudo dnf builddep -y packaging/rpm/gpu-unlock.spec
 	$(MAKE) rpm
 	sudo dnf install -y $(RPMDIR)/RPMS/noarch/gpu-unlock-*-$(VERSION)-*.noarch.rpm
+
+# Unraid has no initramfs: /boot/extra installs after nvidia has bound the
+# cards, so the module has to go into bzroot and the firmware into bzfirmware.
+# Run on the Unraid host itself, with Docker up and the package built.
+install-unraid-image:
+	sh packaging/unraid/image.sh
 
 # Build the module, or build, install and remove the packages, in a
 # container of each distribution.

@@ -56,7 +56,7 @@ ln -sfn &plugin;/firmware /lib/firmware/&name;
 gpu-unlock-firmware || true
 
 if [ -d /sys/module/nvidia ] ; then
-  [ -d /sys/module/gpu_unlock ] || echo "gpu-unlock: nvidia is already loaded, reboot to unlock"
+  [ -d /sys/module/gpu_unlock ] || echo "gpu-unlock: nvidia is already bound, so the unlock cannot run this boot. Unraid has no initramfs: the module has to be inside bzroot before nvidia loads. Run 'make install-unraid-image' (packaging/unraid/image.sh) and then power cycle, not reboot."
 fi
 </INLINE>
 </FILE>
